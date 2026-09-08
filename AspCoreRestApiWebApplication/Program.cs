@@ -36,17 +36,17 @@ app.Run(async context =>
 
     string patternGuid = @"^/api/\w{8}-\w{4}-\w{4}-\w{4}-\w{12}$";
 
-    if(path == "/api" && method == "GET")
+    if (path == "/api" && request.Method == "GET")
     {
         await response.WriteAsJsonAsync(employees);
     }
 
-    if(Regex.IsMatch(path, patternGuid) && method == "GET")
+    else if (Regex.IsMatch(path, patternGuid) && method == "GET")
     {
         string id = path.Value.Substring(path.Value.LastIndexOf('/') + 1);
 
         Employee employee = employees.FirstOrDefault(e => e.Id == id);
-        if(employee is not null)
+        if (employee is not null)
             await response.WriteAsJsonAsync(employee);
         else
         {
@@ -55,7 +55,7 @@ app.Run(async context =>
         }
     }
 
-    if(path == "/api" && method == "POST")
+    else if (path == "/api" && method == "POST")
     {
         try
         {
@@ -71,22 +71,22 @@ app.Run(async context =>
             else
                 throw new Exception("Incorrect data");
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             response.StatusCode = 404;
             await response.WriteAsJsonAsync(new { message = ex.Message });
         }
     }
 
-    if(path == "/api" && method == "PUT")
+    else if (path == "/api" && method == "PUT")
     {
         try
         {
             Employee? employeeClient = await request.ReadFromJsonAsync<Employee>();
-            if(employeeClient is not null)
+            if (employeeClient is not null)
             {
                 var employee = employees.FirstOrDefault(e => e.Id == employeeClient.Id);
-                if(employee is not null)
+                if (employee is not null)
                 {
                     employee.Name = employeeClient.Name;
                     employee.Age = employeeClient.Age;
@@ -102,19 +102,19 @@ app.Run(async context =>
                 throw new Exception("Incorrect data");
             }
         }
-        catch(Exception ex)
+        catch (Exception ex)
         {
             response.StatusCode = 404;
             await response.WriteAsJsonAsync(new { message = ex.Message });
         }
     }
 
-    if(Regex.IsMatch(path, patternGuid) && method == "DELETE")
+    else if (Regex.IsMatch(path, patternGuid) && method == "DELETE")
     {
         string id = path.Value.Substring(path.Value.LastIndexOf('/') + 1);
 
         var employee = employees.FirstOrDefault(e => e.Id == id);
-        if(employee is not null)
+        if (employee is not null)
         {
             employees.Remove(employee);
             await response.WriteAsJsonAsync(employee);
@@ -125,9 +125,13 @@ app.Run(async context =>
             await response.WriteAsJsonAsync(new { message = "Employee not found" });
         }
     }
+    else
+    {
+        response.ContentType = "text/html; charset=utf-8";
+        await response.SendFileAsync("index.html");
+    }
 
-    response.ContentType = "text/html; charset=utf-8";
-    await response.SendFileAsync("index.html");
+    
 });
 
 app.Run();
